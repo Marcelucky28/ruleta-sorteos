@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <title>Sorteos Marcelucky</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+    * { box-sizing: border-box; font-family: sans-serif; }
+    body {
+      margin: 0; min-height: 100vh; background: #121212; color: #fff;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+    }
+    .marca-header {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+      background: #1e1e2f; padding: 12px 28px; border-radius: 50px;
+      border: 1px solid #3a3a55; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+    }
+    .marca-header img {
+      width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #f9a826;
+    }
+    .marca-header span {
+      font-size: 1.5rem; font-weight: 800; letter-spacing: 2px;
+      background: linear-gradient(90deg, #f9a826, #ff2e63);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase;
+    }
+    .contenedor {
+      display: flex; flex-wrap: wrap; gap: 35px; background: #1e1e2f;
+      padding: 30px; border-radius: 18px; max-width: 1050px; width: 100%;
+      justify-content: center; align-items: flex-start;
+    }
+    .panel-ruleta { position: relative; display: flex; flex-direction: column; align-items: center; margin: auto; }
+    .puntero {
+      width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent;
+      border-top: 34px solid #ff2e63; position: absolute; top: -14px; z-index: 10;
+      transform-origin: top center; transition: transform 0.05s;
+    }
+    .puntero.golpe { transform: rotate(-18deg); }
+    canvas#ruleta { border-radius: 50%; border: 8px solid #2a2a40; }
+    .panel-control { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 280px; }
+    h1 { margin: 0; color: #ff2e63; font-size: 1.6rem; }
+    textarea {
+      width: 100%; height: 140px; padding: 10px; border-radius: 8px;
+      border: 2px solid #2a2a40; background: #121212; color: #fff; font-size: 1rem;
+    }
+    .caja { background: #252538; padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    select, input[type="color"] {
+      width: 100%; background: #121212; color: #fff; border: 1px solid #3a3a55; padding: 6px; border-radius: 6px;
+    }
+    button {
+      padding: 14px; font-size: 1.1rem; font-weight: bold; border: none;
+      border-radius: 8px; cursor: pointer; background: #ff2e63; color: white;
+    }
+    button:disabled { background: #555; cursor: not-allowed; }
+    .btn-secundario { background: #3a3a55; font-size: 0.85rem; padding: 8px; }
+    .resultado {
+      padding: 14px; background: #2a2a40; border-radius: 8px; text-align: center;
+      font-size: 1.2rem; font-weight: bold; color: #00fff5;
+    }
+    .panel-historial {
+      background: #252538; padding: 15px; border-radius: 12px; min-width: 220px; max-width: 260px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .panel-historial h3 { margin: 0; color: #00fff5; font-size: 1.1rem; border-bottom: 1px solid #3a3a55; padding-bottom: 8px; }
+    #listaHistorial {
+      list-style: none; padding: 0; margin: 0; max-height: 320px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    #listaHistorial li {
+      background: #121212; padding: 8px 10px; border-radius: 6px; font-size: 0.95rem;
+      border-left: 4px solid #ff2e63;
+    }
+    .footer-marca { margin-top: 16px; font-size: 0.85rem; color: #8888a0; }
+    .footer-marca strong { color: #f9a826; }
+    #confeti { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 999; }
+  </style>
+</head>
+<body class="notranslate">
+  <canvas id="confeti"></canvas>
+
+  <div class="marca-header">
+    <img src="logo.png" alt="Logo Marcelucky">
+    <span>MARCELUCKY</span>
+  </div>
+
+  <div class="contenedor">
+    <div class="panel-ruleta">
+      <div class="puntero" id="puntero"></div>
+      <canvas id="ruleta" width="400" height="400"></canvas>
+    </div>
+
+    <div class="panel-control">
+      <h1>Sorteo con Ruleta</h1>
+      <textarea id="listaNombres">Ana
+Carlos
+Lucia
+Mateo
+Sofia
+Valentin</textarea>
+
+      <div class="caja">
+        <label><input type="checkbox" id="chkEliminar" checked> Eliminar ganador automaticamente</label>
+        <label><input type="checkbox" id="chkSonido" checked> Activar sonido</label>
+      </div>
+
+      <div class="caja grid">
+        <div>
+          <label>Colores:</label>
+          <select id="paletaColores">
+            <option value="vibrante">Vibrante</option>
+            <option value="pastel">Pastel</option>
+            <option value="elegante">Dorado</option>
+            <option value="oceano">Oceano</option>
+          </select>
+        </div>
+        <div>
+          <label>Fondo:</label>
+          <input type="color" id="colorFondo" value="#121212">
+        </div>
+      </div>
+
+      <button type="button" id="btnGirar">GIRAR RULETA</button>
+      <div class="resultado" id="resultado">Listo para sortear</div>
+    </div>
+
+    <div class="panel-historial">
+      <h3>Historial de Ganadores</h3>
+      <ul id="listaHistorial"></ul>
+      <button type="button" class="btn-secundario" id="btnLimpiarHistorial">Limpiar historial</button>
+    </div>
+  </div>
+
+  <div class="footer-marca">
+    Ruleta Oficial de <strong>Marcelucky</strong>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
